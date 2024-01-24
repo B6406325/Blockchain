@@ -51,4 +51,6 @@ class Blockchain:
 #ใช้งาน blockchain
 blockchain = Blockchain()
 #เข้ารหัส Block แรก
-print(blockchain.proof_of_work(5))
+print(blockchain.hash(blockchain.chain[0]))
+#เข้ารหัส Block สอง
+print(blockchain.hash(blockchain.chain[1]))
