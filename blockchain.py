@@ -1,13 +1,13 @@
 import datetime
 import json
 import hashlib
+from flask import Flask
 class Blockchain:
     def __init__(self):
         #เก็บกลุ่มของ block
         self.chain = [] #list ที่เก็บ block
         #genesis block
         self.create_block(nonce=1,previous_hash="0")
-        self.create_block(nonce=10,previous_hash="100")
         
     #สร้าง block ขึ้นมาในระบบ blockchain
     def create_block(self,nonce,previous_hash):
@@ -47,10 +47,16 @@ class Blockchain:
                 new_nonce += 1
         return new_nonce    
             
-            
+         
+#web server
+app = Flask(__name__)
 #ใช้งาน blockchain
 blockchain = Blockchain()
-#เข้ารหัส Block แรก
-print(blockchain.hash(blockchain.chain[0]))
-#เข้ารหัส Block สอง
-print(blockchain.hash(blockchain.chain[1]))
+
+#routing
+@app.route('/')
+def hello():
+    return "<p>Hello Blockchain<p>"
+   
+if __name__ == "__main__":
+    app.run()
