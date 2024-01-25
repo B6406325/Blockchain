@@ -1,23 +1,31 @@
 import datetime
 import json
 import hashlib
+import random
 from flask import Flask , jsonify
 class Blockchain:
     def __init__(self):
         #เก็บกลุ่มของ block
         self.chain = [] #list ที่เก็บ block
         #genesis block
-        self.create_block(nonce=1,previous_hash="0")
+        self.create_block(nonce=1,previous_hash="0",id="B64xxxxx",name="suranaree",booktitle="eng5")
         
     #สร้าง block ขึ้นมาในระบบ blockchain
-    def create_block(self,nonce,previous_hash):
+    def create_block(self,nonce,previous_hash,id,name,booktitle):
         #เก็บส่วนประกอบของ block แต่ละ block
         block={
             "index":len(self.chain)+1,
             "timestamp":str(datetime.datetime.now()),
             "nonce":nonce,
+            "data": {
+                "รหัสนักศึกษา": id,
+                "ชื่อผู้ยืม": name,
+                "ชื่อหนังสือ": booktitle,
+                "วันที่คืน": str(datetime.datetime.now())
+            },
             "previous_hash":previous_hash
         }
+        block["hash"] = self.hash(block)
         self.chain.append(block)
         return block
     
@@ -65,6 +73,13 @@ class Blockchain:
             previous_block = block
             block_index += 1
         return True
+    
+    def make_chain_invalid(self):
+    # Modify the hash of the last block to make it invalid
+        modified_block = self.chain[3]
+        modified_block["hash"] = "InvalidHash123"
+
+        return "Chain modified successfully to make it invalid"
             
 #web server
 app = Flask(__name__)
@@ -86,6 +101,11 @@ def get_chain():
    
 @app.route('/mining',methods=["GET"])
 def mining_block():
+    # Random values for demonstration purposes
+    random_id = "B" + str(random.randint(100000, 999999))  # Example: B123456
+    random_name = "User" + str(random.randint(1, 100))  # Example: User42
+    random_booktitle = "Book" + str(random.randint(1, 50))  # Example: Book23
+
     #pow
     previous_block = blockchain.get_previous_block()
     previous_nonce = previous_block["nonce"]
@@ -94,17 +114,18 @@ def mining_block():
     #hash block ก่อนหน้า
     previous_hash = blockchain.hash(previous_block)
     #update block ใหม่
-    block = blockchain.create_block(nonce,previous_hash)
+    block = blockchain.create_block(nonce, previous_hash, id=random_id, name=random_name, booktitle=random_booktitle)
     response={
         "message": "Mining_Block เรียบร้อย",
         "index":block["index"],
         "timestamp":str(datetime.datetime.now()),
         "nonce":block["nonce"],
-        "previous_hash":block["previous_hash"]
+        "previous_hash":block["previous_hash"],
+        "data": block["data"]  
     }
     return jsonify(response),200
 
-@app.route('/is_valid',methods=["GET"])
+@app.route('/check',methods=["GET"])
 def is_valid():
     is_valid = blockchain.is_chain_valid(blockchain.chain)
     if is_valid:
@@ -113,6 +134,44 @@ def is_valid():
         response={"message":"Blockchain Is Not Valid"}
     return jsonify(response),200  
     
+@app.route('/edit', methods=["GET"])
+def edit_data():
+    # ตรวจสอบว่ามี Block อยู่หรือไม่
+    if len(blockchain.chain) < 4:
+        response = {"message": "Blockchain does not have enough blocks"}
+        return jsonify(response), 400
     
+    block_to_edit = blockchain.chain[3]
+
+    # แก้ไขข้อมูลใน Block ที่ index = 3
+    block_to_edit["data"]["รหัสนักศึกษา"] = "B20000"
+    block_to_edit["data"]["ชื่อผู้ยืม"] = "นาย"
+    block_to_edit["data"]["ชื่อหนังสือ"] = "ช้างๆๆๆ"
+
+    block_to_edit["hash"] = blockchain.hash(block_to_edit)
+
+    response = {
+        "message": "Data Updated Successfully",
+        "index": block_to_edit["index"],
+        "timestamp": block_to_edit["timestamp"],
+        "data": block_to_edit["data"],
+        "nonce": block_to_edit["nonce"],
+        "previous_hash": block_to_edit["previous_hash"],
+        "hash": block_to_edit["hash"]
+    }
+    return jsonify(response), 200
+
+@app.route('/modified', methods=["GET"])
+def make_invalid():
+    result = blockchain.make_chain_invalid()
+
+    if result.startswith("Chain modified"):
+        response = {"message": result}
+    else:
+        response = {"error": result}
+
+    return jsonify(response), 200 if result.startswith("Chain modified") else 400
+
+
 if __name__ == "__main__":
     app.run()
