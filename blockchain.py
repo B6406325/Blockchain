@@ -133,33 +133,6 @@ def is_valid():
     else :
         response={"message":"Blockchain Is Not Valid"}
     return jsonify(response),200  
-    
-@app.route('/edit', methods=["GET"])
-def edit_data():
-    # ตรวจสอบว่ามี Block อยู่หรือไม่
-    if len(blockchain.chain) < 4:
-        response = {"message": "Blockchain does not have enough blocks"}
-        return jsonify(response), 400
-    
-    block_to_edit = blockchain.chain[3]
-
-    # แก้ไขข้อมูลใน Block ที่ index = 3
-    block_to_edit["data"]["รหัสนักศึกษา"] = "B20000"
-    block_to_edit["data"]["ชื่อผู้ยืม"] = "นาย"
-    block_to_edit["data"]["ชื่อหนังสือ"] = "ช้างๆๆๆ"
-
-    block_to_edit["hash"] = blockchain.hash(block_to_edit)
-
-    response = {
-        "message": "Data Updated Successfully",
-        "index": block_to_edit["index"],
-        "timestamp": block_to_edit["timestamp"],
-        "data": block_to_edit["data"],
-        "nonce": block_to_edit["nonce"],
-        "previous_hash": block_to_edit["previous_hash"],
-        "hash": block_to_edit["hash"]
-    }
-    return jsonify(response), 200
 
 @app.route('/modified', methods=["GET"])
 def make_invalid():
